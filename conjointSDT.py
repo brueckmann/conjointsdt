@@ -164,6 +164,8 @@ class conjointGUI:
         self.task_num.set("5")
         self.profile_num = StringVar()
         self.profile_num.set("2")
+        self.task_name = StringVar()
+        self.task_name.set("Choice")
         
         self.options = default_options
         
@@ -441,7 +443,25 @@ class conjointGUI:
         self.entry_profiles_label.pack(side=LEFT)
         self.entry_profiles = Entry(self.profiles_box, width=5, textvariable=self.profile_num)
         self.entry_profiles.pack(side=LEFT)
+
+        self.weighted_randomize_rule = Frame(self.settings,height=1,width=200,bg="black")
+        self.weighted_randomize_rule.pack(pady=10)
+
+        self.qualtricsquestion_label = Label(self.settings, text="Qualtrics Question Settings")
+        self.qualtricsquestion_label.pack()
+
+
+        self.qptaskname_box = Frame(self.settings)
+        self.qptaskname_box.pack()
         
+
+
+        self.entry_qptaskname_label = Label(self.qptaskname_box, text="Name for each Task")
+        self.entry_qptaskname_label.pack(side=LEFT)
+        self.qptaskname = Entry(self.qptaskname_box, width=5, textvariable=self.task_name)
+        self.qptaskname.pack(side=LEFT)
+
+
         self.settings_save = Button(self.settings, text="Save Settings", command=self.settings.destroy)
         self.settings_save.pack()
         
@@ -955,7 +975,7 @@ class conjointGUI:
         out_html_name = filedialog.asksaveasfilename(**self.file_html)
         if out_html_name != None:
             if re.search("\.html",out_html_name[-5:]) != None:
-                html_out(out_html_name, len(self.attribute_list), int(self.profile_num.get()), int(self.task_num.get()))
+                html_out(out_html_name, len(self.attribute_list), int(self.profile_num.get()), int(self.task_num.get()), self.task_name.get())
             else:
                 messagebox.showerror(title="Invalid File Name",message="Invalid file extension. File must have the .html extension")
 
@@ -1589,7 +1609,7 @@ for (var pr = 0; pr < returnarrayKeys.length; pr++){
     out_file.close()
 
 # Output sample HTML template 
-def html_out(filename, num_attr, profiles, tasks):
+def html_out(filename, num_attr, profiles, tasks, taskname):
     filename = filename.rstrip("html")
     filename = filename.rstrip(".")
     
@@ -1600,7 +1620,7 @@ def html_out(filename, num_attr, profiles, tasks):
         # Create a header row
         header = "<tr>\n<td>&nbsp;</td>\n"
         for k in range(profiles):
-            header = header + '<td style="text-align: center;">\n<strong>Choice ' + str(k+1) + '</strong></td>\n'
+            header = header + '<td style="text-align: center;">\n<strong>' + taskname + str(k+1) + '</strong></td>\n'
         header = header + '</tr>\n'
         
         # Row Array
