@@ -1620,7 +1620,7 @@ def html_out(filename, num_attr, profiles, tasks, taskname):
         # Create a header row
         header = "<tr>\n<td>&nbsp;</td>\n"
         for k in range(profiles):
-            header = header + '<td style="text-align: center;">\n<strong>' + taskname + str(k+1) + '</strong></td>\n'
+            header = header + '<td style="text-align: center;">\n<strong>' + taskname + '&nbsp;' + str(k+1) + '</strong></td>\n'
         header = header + '</tr>\n'
         
         # Row Array
