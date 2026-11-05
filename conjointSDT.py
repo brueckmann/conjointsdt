@@ -168,7 +168,9 @@ class conjointGUI:
         self.task_name.set("Choice")
         self.only_table = IntVar()
         self.only_table.set(0)
-
+        self.custom_tablehead = IntVar()
+        self.custom_tablehead.set(0)
+        
         self.options = default_options
         
         # Boxes for Attributes and Levels
@@ -370,6 +372,8 @@ class conjointGUI:
                     self.task_name.set("Choice")
                     self.only_table = IntVar()
                     self.only_table.set(0)
+                    self.custom_tablehead = IntVar()
+                    self.custom_tablehead.set(0)
                     
                     for line in csv_open:
                         attr = line.pop(0)
@@ -467,7 +471,8 @@ class conjointGUI:
 
         self.qualtricstabonly_button = Checkbutton(self.settings, text="Export only tables for qualtrics questions", variable = self.only_table)
         self.qualtricstabonly_button.pack()
-
+        self.custom_tablehead_button = Checkbutton(self.settings, text="Provide own header text for qualtrics questions", variable = self.custom_tablehead)
+        self.custom_tablehead_button.pack()
 
 
         self.settings_save = Button(self.settings, text="Save Settings", command=self.settings.destroy)
@@ -983,7 +988,7 @@ class conjointGUI:
         out_html_name = filedialog.asksaveasfilename(**self.file_html)
         if out_html_name != None:
             if re.search("\.html",out_html_name[-5:]) != None:
-                html_out(out_html_name, len(self.attribute_list), int(self.profile_num.get()), int(self.task_num.get()), self.task_name.get(), int(self.only_table.get()))
+                html_out(out_html_name, len(self.attribute_list), int(self.profile_num.get()), int(self.task_num.get()), self.task_name.get(), int(self.only_table.get()), int(self.custom_tablehead.get()))
             else:
                 messagebox.showerror(title="Invalid File Name",message="Invalid file extension. File must have the .html extension")
 
@@ -1616,17 +1621,59 @@ for (var pr = 0; pr < returnarrayKeys.length; pr++){
     
     out_file.close()
 
+
+
+PLACEHOLDER = "{{TASK_NUMBER}}"
+
+def load_text_file(title):
+    """Let the user pick a .html/.txt file and return its raw contents ("" if cancelled)."""
+    path = filedialog.askopenfilename(
+        title=title,
+        filetypes=[("HTML or text", "*.html *.htm *.txt"), ("All files", "*.*")]
+    )
+    if not path:
+        return ""
+    with open(path, "r", encoding="utf-8-sig") as f:
+        return f.read()
+
+
+def ask_custom_texts(tasks):
+    """Ask the user how to supply custom text. Returns a list with one entry per task."""
+    choice = messagebox.askyesnocancel(
+        title="Custom text",
+        message=("Do you want to upload a text file to appear above the table?\n\n"
+                 "Yes = one file used for all tasks (with " + PLACEHOLDER + " for each task) \n"
+                 "No = a separate file for each task\n"
+                 "Cancel = no custom text\n\n"
+                 "Tip: use " + PLACEHOLDER + " in your text to insert the task number.")
+    )
+    if choice is None:      # Cancel
+        return [""] * tasks
+    if choice:              # Yes: one file for all
+        text = load_text_file("Select text/HTML to use for all tasks")
+        return [text] * tasks
+    # No: one file per task
+    return [load_text_file("Select text/HTML for task " + str(i+1)) for i in range(tasks)]
+
+            
 # Output sample HTML template 
-def html_out(filename, num_attr, profiles, tasks, taskname, OnlyTable):
+def html_out(filename, num_attr, profiles, tasks, taskname, OnlyTable, CustomTable):
     filename = filename.rstrip("html")
     filename = filename.rstrip(".")
-    
+
+    # Only ask when CustomTable is True
+    custom_texts = ask_custom_texts(tasks) if CustomTable else []
+
     for i in range(tasks):
         # Top Row
-        if OnlyTable:
-            top = '<div>\n<table class="UserTable">\n<tbody>\n'
+        if CustomTable:
+            custom = custom_texts[i].replace(PLACEHOLDER, str(i+1))
+            top = custom + '\n<div>\n<table class="UserTable">\n<tbody>\n'
         else:
-            top = ('<span>Question ' + str(i+1) + '</span>\n<br /><br />\n'
+            if OnlyTable:
+                top = custom + '\n<div>\n<table class="UserTable">\n<tbody>\n'
+            else: 
+                top = ('<span>Question ' + str(i+1) + '</span>\n<br /><br />\n'
                    '<span>Please carefully review the options detailed below, then please answer the questions.</span>\n'
                    '<br/>\n<br/>\n'
                    '<span>Which of these choices do you prefer?</span>\n<br />\n'
